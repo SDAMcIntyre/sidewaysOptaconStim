@@ -8,17 +8,20 @@ Created on Tue Nov  4 16:29:29 2014
             # assigning signal pin code
             # assigning stimulus name?
             # include response period
-    ## make lead time in write_optacon_protocol_file() a separate block
     
 # New in this version:
-    ## overlapping stim fixed
-
+    ## make lead time in write_optacon_protocol_file() a separate block
+    ## put stim file in a specified folder
+    
 @author: sarahmcintyre
 """
 
 from optacon import *
 from optaconSideways import *
 
-motionStim, repList = single_trial()
+motionStim, repList = single_optacon_presentation()
 
-write_optacon_protocol_file(fileName='sidewaysOverlap',stimList=motionStim,stimRep=repList)
+exptPath = r'./pilot' 
+if not os.path.exists(exptPath): os.makedirs(exptPath)
+
+write_optacon_protocol_file(fileName='%s/sidewaysOverlap' %(exptPath),stimList=motionStim,stimRep=repList)

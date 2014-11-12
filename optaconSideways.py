@@ -22,11 +22,11 @@ def time_to_frames(t):
     """
     return int(ceil(t/4.35))
 
-def make_stim_map(trialDur,stepDur,isoi):
+def make_stim_map(presDur,stepDur,isoi):
     """ This functions makes an temporal "map" of the timing of apparent motion steps, 
         in the form of an array. Rows are frames, columns are step numbers. 
         
-        trialDur:    total presentation time for a single apparent motion stimulus trial
+        presDur:    total presentation time for a single apparent motion stimulus trial
         stepDur:    the duration of each step of apparent motion
         isoi:        the time from the start of one step to the start of the next
         
@@ -39,11 +39,14 @@ def make_stim_map(trialDur,stepDur,isoi):
         configuration by the functions get_start_rows() and the input parameters for 
         apparent_motion_stim_sideways().
     """
-    trialFrames = time_to_frames(trialDur)
+    trialFrames = time_to_frames(presDur)
     onFrames = time_to_frames(stepDur)
     isoiFrames = time_to_frames(isoi)
-    # number of steps that will start - if not enough time in trialDur, last one won't be as long
-    nSteps = int(ceil(1 + (trialFrames - onFrames)/float(isoiFrames)))
+    # number of steps that will start - if not enough time in presDur, last one won't be as long
+    if isoiFrames == 0:
+        nSteps = 0
+    else:
+        nSteps = int(ceil(1 + (trialFrames - onFrames)/float(isoiFrames)))
     stimMap = zeros([trialFrames,nSteps,],int)
     
     for thisStep in range(nSteps):
@@ -103,9 +106,9 @@ def create_one_image(stepsToUse,colsToUse,randomPos,startRows,stepVector,rowsToU
                 image = populate_one_step(imageToWrite=image,stepNo=stepNo,colsToUse=colsToUse[thisFinger],randomPos=randomPos[thisFinger],startRows=startRows[thisFinger],stepVector=stepVector[thisFinger],rowsToUse=rowsToUse)
     return image
 
-def single_trial(trialDur=2000, stepDur={'left':200,'right':200}, isoi={'left':82,'right':82}, 
-                                  rowsToUse=range(0,6), colsToUse={'left':range(0,6),'right':range(18,24)},
-                                  stepVector={'left':1,'right':-1}, randomPos={'left':False,'right':False}, spread={'left':True,'right':True}):
+def single_optacon_presentation(presDur=3000, stepDur=[200,200], isoi=[82,82], 
+                                  rowsToUse=range(0,6), colsToUse=[range(0,6),range(18,24)],
+                                  stepVector=[1,1], randomPos=[False,False], spread=[True,True]):
     """This function creates an apparent motion stimulus for the Optacon, in a sideways configuration
     It returns a list of optacon array configurations, one for each step of the apparent motion, in order.
     
@@ -132,6 +135,16 @@ def single_trial(trialDur=2000, stepDur={'left':200,'right':200}, isoi={'left':8
             to two fingers [Left, Right]
     """    
     # respTime = 500,
+    
+    #convert lists to dictionaries
+    lab = ['left','right']
+    stepDur = dict(zip(lab,stepDur))
+    isoi = dict(zip(lab,isoi))
+    colsToUse = dict(zip(lab,colsToUse))
+    stepVector = dict(zip(lab,stepVector))
+    randomPos = dict(zip(lab,randomPos))
+    spread = dict(zip(lab,spread))
+    
     mapList=[]
     motionStim=[]
     
@@ -140,7 +153,7 @@ def single_trial(trialDur=2000, stepDur={'left':200,'right':200}, isoi={'left':8
         if randomPos[finger]:
             spread[finger] = True        
         # create a stim map for each stim (left and right finger)    
-        mapList.append(make_stim_map(trialDur=trialDur,stepDur=stepDur[finger],isoi=isoi[finger]))
+        mapList.append(make_stim_map(presDur=presDur,stepDur=stepDur[finger],isoi=isoi[finger]))
     
     # set starting optacon images for each stim (left and right finger)
     startRows = {'left':get_start_rows(colsToUse=colsToUse['left'],spread=spread['left'],rowsToUse=rowsToUse),
