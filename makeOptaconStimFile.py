@@ -19,9 +19,9 @@ Created on Tue Nov  4 16:29:29 2014
 from optacon import *
 from optaconSideways import *
 
-motionStim, repList = single_optacon_presentation()
+motionStim, repList = single_presentation()
 
 exptPath = r'./pilot' 
 if not os.path.exists(exptPath): os.makedirs(exptPath)
 
-write_optacon_protocol_file(fileName='%s/sidewaysOverlap' %(exptPath),stimList=motionStim,stimRep=repList)
+write_protocol_file(fileName='%s/sidewaysOverlap' %(exptPath),stimList=motionStim,stimRep=repList)

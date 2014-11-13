@@ -43,7 +43,7 @@ stimCombinations = [{'adaptStandard':adaptStandard,
     adaptStandard in [-82,82,'sNone','sNone'] for 
     adaptComparison in [-82,82,'cNone','cNone'] for 
     testStandard in [-82,82,'random'] 
-    for testComparison in [-104,-82,-60,-39,-17,0,17,39,60,82,104,'random'] 
+    for testComparison in [-104,-82,-60,-39,-17,17,39,60,82,104,'random'] 
     if adaptStandard != adaptComparison and type(adaptStandard) == type(adaptComparison) == type(testStandard) == type(testComparison)]
 
 trials = data.TrialHandler(stimCombinations,nReps=nReps)
@@ -69,7 +69,7 @@ for thisTrial in trials:
     respName = ['response']
     
     if thisTrial['testStandard'] == 'random':
-        testStim, testRep = single_optacon_presentation(presDur=presentationTime,randomPos=[True,True])
+        testStim, testRep = single_presentation(presDur=presentationTime,randomPos=[True,True])
         testName = ['random']*len(testStim)
         
         stimList += testStim + respStim   
@@ -91,12 +91,12 @@ for thisTrial in trials:
             testRight = thisTrial['testStandard']
             
         #adapting stimulus
-        adaptStim, adaptRep = single_optacon_presentation(presDur=presentationTime,isoi=[abs(adaptLeft),abs(adaptRight)],stepVector=[sign(adaptLeft),sign(adaptRight)])
+        adaptStim, adaptRep = single_presentation(presDur=presentationTime,isoi=[abs(adaptLeft),abs(adaptRight)],stepVector=[sign(adaptLeft),sign(adaptRight)])
         adaptName = ['adapt_STDLOC'+str(thisTrial['standardLocation'])+'_STDISOI'+str(thisTrial['adaptStandard'])+'_CMPISOI'+str(thisTrial['adaptComparison'])]
         adaptName = adaptName*len(adaptStim)
         
         #test stimulus
-        testStim, testRep = single_optacon_presentation(presDur=presentationTime,isoi=[abs(testLeft),abs(testRight)],stepVector=[sign(testLeft),sign(testRight)])
+        testStim, testRep = single_presentation(presDur=presentationTime,isoi=[abs(testLeft),abs(testRight)],stepVector=[sign(testLeft),sign(testRight)])
         testName = ['test_STDLOC'+str(thisTrial['standardLocation'])+'_STDISOI'+str(thisTrial['testStandard'])+'_CMPISOI'+str(thisTrial['testComparison'])]
         testName = testName*len(testStim)
         
@@ -108,4 +108,4 @@ for thisTrial in trials:
 #trials.printAsText(stimOut=['adaptStandard','adaptComparison','testStandard','testComparison','standardLocation'])
 trials.saveAsText(fileName=exptFolder+'/pilot1_stimLog_SM', stimOut=['adaptStandard','adaptComparison','testStandard','testComparison','standardLocation'])    
 
-write_optacon_protocol_file(fileName=exptFolder+'/pilot1_protocols_SM',stimList=stimList,stimRep=repList,blockList=blockList,stimName=nameList)
+write_protocol_file(fileName=exptFolder+'/pilot1_protocols_SM',stimList=stimList,stimRep=repList,blockList=blockList,stimName=nameList)

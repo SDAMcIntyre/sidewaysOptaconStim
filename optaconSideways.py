@@ -5,74 +5,13 @@ Created on Tue Nov  4 15:20:27 2014
 @author: sarahmcintyre
 """
 
+from optacon import map_apparent_motion
+from optacon import get_start_rows
 import numpy
 import random
-import math
 
 zeros = numpy.zeros
-repeat = numpy.repeat
 sample = random.sample
-ceil = math.ceil
-
-def time_to_frames(t):
-    """ Convert time in milliseconds ("t") to number of 4.35ms frames of the 
-    Optacon. If t is not divisible by 4.35, this function includes the last 
-    frame to ensure that the actual running time is at least as long as t.
-    Maximum actual running time is up to t + 4.35ms.
-    """
-    return int(ceil(t/4.35))
-
-def make_stim_map(presDur,stepDur,isoi):
-    """ This functions makes an temporal "map" of the timing of apparent motion steps, 
-        in the form of an array. Rows are frames, columns are step numbers. 
-        
-        presDur:    total presentation time for a single apparent motion stimulus trial
-        stepDur:    the duration of each step of apparent motion
-        isoi:        the time from the start of one step to the start of the next
-        
-        The array returned provides information about which step is "on" at any given frame (4.35ms).
-        For example, at the start, the first step should be on, so stimMap[0,0] = 1. After a number 
-        of frames determined by the isoi, the second step should be on, stimMap[isoiFrames,1] = 1.
-        
-        Note that this map does not provide any information about which pins in the array are on.
-        The first step represents whichever optacon configuration is determined to be the starting
-        configuration by the functions get_start_rows() and the input parameters for 
-        apparent_motion_stim_sideways().
-    """
-    trialFrames = time_to_frames(presDur)
-    onFrames = time_to_frames(stepDur)
-    isoiFrames = time_to_frames(isoi)
-    # number of steps that will start - if not enough time in presDur, last one won't be as long
-    if isoiFrames == 0:
-        nSteps = 0
-    else:
-        nSteps = int(ceil(1 + (trialFrames - onFrames)/float(isoiFrames)))
-    stimMap = zeros([trialFrames,nSteps,],int)
-    
-    for thisStep in range(nSteps):
-        startFrame = thisStep*isoiFrames
-        if startFrame + onFrames > len(stimMap):
-            onRange = range(startFrame,len(stimMap))
-        else:
-            onRange = range(startFrame,startFrame + onFrames)
-        stimMap[onRange,thisStep] = 1
-    return stimMap
-    
-def get_start_rows(colsToUse=range(0,6),spread=True,rowsToUse=range(0,6)):
-    startRows = zeros([1,len(colsToUse)],int)
-    if spread:
-        nSpreadSections = len(colsToUse)/2
-        nSpreadSectionRows = len(rowsToUse)/nSpreadSections
-        spreadSectionList=repeat(sample(range(nSpreadSections),len(colsToUse)/2),2) ## list of equal sections, number according to rows/cols being used
-        for thisCol in range(len(colsToUse)): ## randomise where in the section each pin starts
-            if thisCol % 2 == 0:
-                thisRow = spreadSectionList[thisCol]*nSpreadSectionRows + sample(range(nSpreadSectionRows),1)[0]
-            startRows[0][thisCol] = thisRow
-    else:
-        startRow=sample(rowsToUse,1)[0]
-        for iCol in range(len(colsToUse)):
-            startRows[0][iCol] = startRow
-    return startRows[0]
 
 def make_image_list(mapList):
     repList=[]
@@ -106,7 +45,7 @@ def create_one_image(stepsToUse,colsToUse,randomPos,startRows,stepVector,rowsToU
                 image = populate_one_step(imageToWrite=image,stepNo=stepNo,colsToUse=colsToUse[thisFinger],randomPos=randomPos[thisFinger],startRows=startRows[thisFinger],stepVector=stepVector[thisFinger],rowsToUse=rowsToUse)
     return image
 
-def single_optacon_presentation(presDur=3000, stepDur=[200,200], isoi=[82,82], 
+def single_presentation(presDur=3000, stepDur=[50,50], isoi=[82,82], 
                                   rowsToUse=range(0,6), colsToUse=[range(0,6),range(18,24)],
                                   stepVector=[1,1], randomPos=[False,False], spread=[True,True]):
     """This function creates an apparent motion stimulus for the Optacon, in a sideways configuration
@@ -153,7 +92,7 @@ def single_optacon_presentation(presDur=3000, stepDur=[200,200], isoi=[82,82],
         if randomPos[finger]:
             spread[finger] = True        
         # create a stim map for each stim (left and right finger)    
-        mapList.append(make_stim_map(presDur=presDur,stepDur=stepDur[finger],isoi=isoi[finger]))
+        mapList.append(map_apparent_motion(presDur=presDur,stepDur=stepDur[finger],isoi=isoi[finger]))
     
     # set starting optacon images for each stim (left and right finger)
     startRows = {'left':get_start_rows(colsToUse=colsToUse['left'],spread=spread['left'],rowsToUse=rowsToUse),
