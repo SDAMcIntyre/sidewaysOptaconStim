@@ -26,27 +26,27 @@ import numpy
 zeros = numpy.zeros
 
 presentationTime = 3000
-pauseTime = 500
-responseTime = 2000
+pauseTime = 1000
+responseTime = 1000
+nReps =1
 
 exptFolder = r'./pilot1' 
 if not os.path.exists(exptFolder): 
     os.makedirs(exptFolder)
 
-stimCombinations = []
-for standardLocation in ['left','right']:        
-    for adaptStndComp in [[-82,82],[82,-82]]:
-        for testStandard in [-82,82]:
-            for testComparison in [-104,-82,-60,-39,-17,0,17,39,60,82,104]:
-                stimCombinations.append(
-                {'adaptStandard':adaptStndComp[0], 
-                 'adaptComparison':adaptStndComp[1],
-                'testStandard':testStandard,
-                'testComparison':testComparison,
-                'standardLocation':standardLocation}
-                )
+stimCombinations = [{'adaptStandard':adaptStandard, 
+    'adaptComparison':adaptComparison,
+    'testStandard':testStandard,
+    'testComparison':testComparison,
+    'standardLocation':standardLocation} for 
+    standardLocation in ['left','right'] for 
+    adaptStandard in [-82,82,'sNone','sNone'] for 
+    adaptComparison in [-82,82,'cNone','cNone'] for 
+    testStandard in [-82,82,'random'] 
+    for testComparison in [-104,-82,-60,-39,-17,0,17,39,60,82,104,'random'] 
+    if adaptStandard != adaptComparison and type(adaptStandard) == type(adaptComparison) == type(testStandard) == type(testComparison)]
 
-trials = data.TrialHandler(stimCombinations,nReps=1)
+trials = data.TrialHandler(stimCombinations,nReps=nReps)
 
 stimList = []
 repList = []
@@ -58,54 +58,54 @@ for thisTrial in trials:
     
     blockNo += 1 #starts at 2 because 1 is reserved for lead time
     
-    if thisTrial['standardLocation'] == 'left':
-        adaptLeft = thisTrial['adaptStandard']
-        adaptRight = thisTrial['adaptComparison']
-        testLeft = thisTrial['testStandard']
-        testRight = thisTrial['testComparison']
-    else:
-        adaptLeft = thisTrial['adaptComparison']
-        adaptRight = thisTrial['adaptStandard']
-        testLeft = thisTrial['testComparison']
-        testRight = thisTrial['testStandard']
-        
-    #adapting stimulus
-    adaptStim, adaptRep = single_optacon_presentation(presDur=presentationTime,isoi=[abs(adaptLeft),abs(adaptRight)],stepVector=[sign(adaptLeft),sign(adaptRight)])
-    adaptName = ['adapt_STDLOC'+str(thisTrial['standardLocation'])+'_STDISOI'+str(thisTrial['adaptStandard'])+'_CMPISOI'+str(thisTrial['adaptComparison'])]
-    adaptName = adaptName*len(adaptStim)
-    
     #pause
-    pauseStim = zeros([24,6],int)
+    pauseStim = [zeros([24,6],int)]
     pauseRep = [time_to_frames(pauseTime)]
     pauseName = ['pause']
     
-    #test stimulus
-    testStim, testRep = single_optacon_presentation(presDur=presentationTime,isoi=[abs(testLeft),abs(testRight)],stepVector=[sign(testLeft),sign(testRight)])
-    testName = ['test_STDLOC'+str(thisTrial['standardLocation'])+'_STDISOI'+str(thisTrial['testStandard'])+'_CMPISOI'+str(thisTrial['testComparison'])]
-    testName = testName*len(testStim)
-    
     #response
-    respStim = zeros([24,6],int)
+    respStim = [zeros([24,6],int)]
     respRep = [time_to_frames(responseTime)]
     respName = ['response']
     
-    stimList.append(adaptStim)
-    stimList.append(pauseStim)
-    stimList.append(testStim)
-    stimList.append(respStim)
+    if thisTrial['testStandard'] == 'random':
+        testStim, testRep = single_optacon_presentation(presDur=presentationTime,randomPos=[True,True])
+        testName = ['random']*len(testStim)
+        
+        stimList += testStim + respStim   
+        repList += testRep + respRep
+        nameList += testName + respName
+        blockList += [blockNo] * (len(testStim) + len(respStim))
+        
+    else:
+        
+        if thisTrial['standardLocation'] == 'left':
+            adaptLeft = thisTrial['adaptStandard']
+            adaptRight = thisTrial['adaptComparison']
+            testLeft = thisTrial['testStandard']
+            testRight = thisTrial['testComparison']
+        else:
+            adaptLeft = thisTrial['adaptComparison']
+            adaptRight = thisTrial['adaptStandard']
+            testLeft = thisTrial['testComparison']
+            testRight = thisTrial['testStandard']
+            
+        #adapting stimulus
+        adaptStim, adaptRep = single_optacon_presentation(presDur=presentationTime,isoi=[abs(adaptLeft),abs(adaptRight)],stepVector=[sign(adaptLeft),sign(adaptRight)])
+        adaptName = ['adapt_STDLOC'+str(thisTrial['standardLocation'])+'_STDISOI'+str(thisTrial['adaptStandard'])+'_CMPISOI'+str(thisTrial['adaptComparison'])]
+        adaptName = adaptName*len(adaptStim)
+        
+        #test stimulus
+        testStim, testRep = single_optacon_presentation(presDur=presentationTime,isoi=[abs(testLeft),abs(testRight)],stepVector=[sign(testLeft),sign(testRight)])
+        testName = ['test_STDLOC'+str(thisTrial['standardLocation'])+'_STDISOI'+str(thisTrial['testStandard'])+'_CMPISOI'+str(thisTrial['testComparison'])]
+        testName = testName*len(testStim)
+        
+        stimList += adaptStim + pauseStim + testStim + respStim   
+        repList += adaptRep + pauseRep + testRep + respRep
+        nameList += adaptName + pauseName + testName + respName
+        blockList += [blockNo] * (len(adaptStim) + len(pauseStim) + len(testStim) + len(respStim))
     
-    repList.append(adaptRep)
-    repList.append(pauseRep)
-    repList.append(testRep)
-    repList.append(respRep)
-
-    nameList.append(adaptName)
-    nameList.append(pauseName)
-    nameList.append(testName)
-    nameList.append(respName)
-    
-    #BLOCK LIST IS NOT LONG ENOUGH, SO CALL TO write_optacon_protocol_file() FAILS
-    blockList.append([blockNo] * (len(adaptStim) + len(pauseStim) + len(testStim) + len(respStim)) )
-    
+#trials.printAsText(stimOut=['adaptStandard','adaptComparison','testStandard','testComparison','standardLocation'])
+trials.saveAsText(fileName=exptFolder+'/pilot1_stimLog_SM', stimOut=['adaptStandard','adaptComparison','testStandard','testComparison','standardLocation'])    
 
 write_optacon_protocol_file(fileName=exptFolder+'/pilot1_protocols_SM',stimList=stimList,stimRep=repList,blockList=blockList,stimName=nameList)
