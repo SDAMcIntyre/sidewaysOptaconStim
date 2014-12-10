@@ -45,11 +45,11 @@ def write_protocol_file(fileName,stimList,stimRep=[1],blockList=[2],dwellTime=[4
     if (not len(stimList)==len(stimRep)==len(blockList)==len(dwellTime)==len(stimName)):
         sys.exit('stimulus lists must have equal length')
 
-    # add blank stim to start of protocol
+    # add blank stim to start of protocol for lead time
     stimList.insert(0,zeros([24,6],int))
     stimRep.insert(0,int(ceil(leadTime/dwellTime[0])))
     blockList.insert(0,1)
-    dwellTime.insert(0,4.35)    
+    dwellTime.insert(0,4.35)
     stimName.insert(0,'lead time')
     # ----------------
     
