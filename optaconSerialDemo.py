@@ -1,18 +1,25 @@
 import serial
 from psychopy import data, visual, event, core
+import os
+
+exptFolder = r'./questDemo' 
+if not os.path.exists(exptFolder): 
+    os.makedirs(exptFolder)
 
 optacon=serial.Serial("/dev/tty.KeySerial1",9600,timeout=1)
 optacon.read(100) #check if there's a better way to clear optacon.read
 
-stimList = [{'blockNo':blockNo} for blockNo in range(2,5)] 
-trials = data.TrialHandler(stimList,2)
+blocksToUse = range(2,5) # start at 2 because the first block should be blank (it is always played at the beginning)
+nRepeats = 5
+stimList = [{'blockNo':blockNo} for blockNo in blocksToUse] 
+trials = data.TrialHandler(stimList, nRepeats)
 trials.data.addDataType('repsonse')
 
 pedal = ['a','c']
 response = ['left','right']
 quitkeys = ['escape','esc']
 
-win = visual.Window([1366, 768],fullscr=True) #[600,400]
+win = visual.Window([1366, 768],fullscr=True) #[1680, 1050]
 msg = visual.TextStim(win, text='Start the Optacon protocol...\n<esc> to quit')
 msg.draw()
 win.flip()
@@ -24,9 +31,9 @@ for thisTrial in trials:
     while not any(keyPressed) and not optaconStatus == 'READY':
         optaconStatus = optacon.read(size=5)
         keyPressed = event.getKeys(keyList=quitkeys)
-    print optaconStatus
     
     optacon.write("b"+str(thisTrial['blockNo']))
+    print thisTrial['blockNo']
     msg = visual.TextStim(win, text='Sending next stimulus to Optacon\n<esc> to quit')
     msg.draw()
     win.flip()
