@@ -2,32 +2,21 @@
 """
 Created on Wed Nov  12 14:33:59 2014
 
-# To do:
-    ## in progress function to generate full experiment set of motion stimuli:
-            # assigning blockNo
-            # assigning signal pin code
-            # account for trials with no adapting stimulus
-    
-# New in this version:
-    ## script almost generates full experiment set of motion stimuli:
-            # assigns stimulus name
-            # pairs adapting and test stimuli
-            # includes pause and response period
-    ## make lead time in write_optacon_protocol_file() a separate block
-
 @author: sarahmcintyre
 """
 
-from optacon import *
-from optaconSideways import *
+import optacon
+import optaconSideways
 from psychopy import data
 import numpy
 import os
 
+single_presentation = optaconSideways.single_presentation
 zeros = numpy.zeros
 sign = numpy.sign
 
 presentationTime = 3000
+stepDuration = [50,50]
 pauseTime = 1000
 responseTime = 1000
 nReps =1
@@ -36,17 +25,18 @@ exptFolder = r'./pilot1'
 if not os.path.exists(exptFolder): 
     os.makedirs(exptFolder)
 
-stimCombinations = [{'adaptStandard':adaptStandard, 
+stimCombinations = [{'standardLocation':standardLocation,
+    'adaptStandard':adaptStandard, 
     'adaptComparison':adaptComparison,
     'testStandard':testStandard,
-    'testComparison':testComparison,
-    'standardLocation':standardLocation} for 
+    'testComparison':testComparison} for 
     standardLocation in ['left','right'] for 
-    adaptStandard in [-82,82,'sNone'] for 
-    adaptComparison in [-82,82,'cNone'] for 
-    testStandard in [-82,82,'random'] 
-    for testComparison in [-104,-82,-60,-39,-17,17,39,60,82,104,'random'] 
-    if adaptStandard != adaptComparison and type(adaptStandard) == type(adaptComparison) == type(testStandard) == type(testComparison)]
+    adaptStandard in [-82,82] for 
+    adaptComparison in [-82,82] for 
+    testStandard in [-82,82] for 
+    testComparison in [-104,-82,-60,-39,-17,17,39,60,82,104] 
+    if adaptStandard != adaptComparison]
+stimCombinations.append({'standardLocation':'none', 'adaptStandard':'none', 'adaptComparison':'none', 'testStandard':'random', 'testComparison':'random'})
 
 trials = data.TrialHandler(stimCombinations,nReps=nReps,method='sequential')
 trials.data.addDataType('blockNo')
@@ -64,11 +54,14 @@ for thisTrial in trials:
     
     #pause
     pauseStim = [zeros([24,6],int)]
-    pauseRep = [time_to_frames(pauseTime)]
+    pauseRep = [optacon.time_to_frames(pauseTime)]
     pauseName = ['pause']
     
     if thisTrial['testStandard'] == 'random':
-        testStim, testRep = single_presentation(presDur=presentationTime,randomPos=[True,True])
+        testStim, testRep = single_presentation(presDur=presentationTime,
+                                                                            stepDur=stepDuration,
+                                                                            isoi=[82,82],
+                                                                            randomPos=[True,True])
         testName = ['random']*len(testStim)
         
         stimList += testStim
@@ -90,12 +83,18 @@ for thisTrial in trials:
             testRight = thisTrial['testStandard']
             
         #adapting stimulus
-        adaptStim, adaptRep = single_presentation(presDur=presentationTime,isoi=[abs(adaptLeft),abs(adaptRight)],stepVector=[sign(adaptLeft),sign(adaptRight)])
+        adaptStim, adaptRep = single_presentation(presDur=presentationTime,
+                                                                            stepDur=stepDuration,
+                                                                            isoi=[abs(adaptLeft),abs(adaptRight)],
+                                                                            stepVector=[sign(adaptLeft),sign(adaptRight)])
         adaptName = ['adapt_STDLOC'+str(thisTrial['standardLocation'])+'_STDISOI'+str(thisTrial['adaptStandard'])+'_CMPISOI'+str(thisTrial['adaptComparison'])]
         adaptName = adaptName*len(adaptStim)
         
         #test stimulus
-        testStim, testRep = single_presentation(presDur=presentationTime,isoi=[abs(testLeft),abs(testRight)],stepVector=[sign(testLeft),sign(testRight)])
+        testStim, testRep = single_presentation(presDur=presentationTime,
+                                                                            stepDur=stepDuration,
+                                                                            isoi=[abs(testLeft),abs(testRight)],
+                                                                            stepVector=[sign(testLeft),sign(testRight)])
         testName = ['test_STDLOC'+str(thisTrial['standardLocation'])+'_STDISOI'+str(thisTrial['testStandard'])+'_CMPISOI'+str(thisTrial['testComparison'])]
         testName = testName*len(testStim)
         
@@ -104,7 +103,13 @@ for thisTrial in trials:
         nameList += adaptName + pauseName + testName
         blockList += [blockNo] * (len(adaptStim) + len(pauseStim) + len(testStim))
     
-#trials.printAsText(stimOut=['adaptStandard','adaptComparison','testStandard','testComparison','standardLocation'])
-trials.saveAsText(fileName=exptFolder+'/pilot1_stimLog_SM', stimOut=['adaptStandard','adaptComparison','testStandard','testComparison','standardLocation'], dataOut=['blockNo_raw'])
+trials.saveAsText(fileName=exptFolder+'/pilot1_stimList', 
+                                stimOut=['adaptStandard','adaptComparison','testStandard','testComparison','standardLocation'], 
+                                dataOut=['blockNo_raw'],
+                                appendFile=False)
 
-write_protocol_file(fileName=exptFolder+'/pilot1_protocols_SM',stimList=stimList,stimRep=repList,blockList=blockList,stimName=nameList)
+optacon.write_protocol_file(fileName=exptFolder+'/pilot1_protocol',
+                                stimList=stimList,
+                                stimRep=repList,
+                                blockList=blockList,
+                                stimName=nameList)
