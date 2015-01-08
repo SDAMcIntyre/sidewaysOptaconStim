@@ -48,7 +48,7 @@ def stim_set(presentationTime, stepDuration, standard, comparison, exptFolder, e
         else:
             stndPos = 1
             compPos = 0
-            name = [compName+'_'+sndName]
+            name = [compName+'_'+stndName]
             
         isoiLR[stndPos] = abs(standard)
         isoiLR[compPos] = abs(thisTrial['isoi'])
@@ -60,7 +60,7 @@ def stim_set(presentationTime, stepDuration, standard, comparison, exptFolder, e
                                                                             isoi = isoiLR,
                                                                             rowsToUse=range(0,6), colsToUse=[range(0,6),range(18,24)],
                                                                             stepVector = stepVectorLR, 
-                                                                            randomPos=[False,False], spread=[True,True]]
+                                                                            randomPos=[False,False], spread=[True,True]
                                                                             )
         
         name = name*len(stim)
