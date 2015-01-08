@@ -57,7 +57,8 @@ for thisTrial in trials:
         keyPressed = event.waitKeys(keyList=pedal+quitkeys)
         
     if keyPressed[0] in quitkeys:
-        core.quit('user aborted')
+        print 'user aborted'
+        core.quit()
     
     thisResp = response[pedal.index(keyPressed[0])]
     print thisResp
@@ -77,3 +78,5 @@ msg.draw()
 win.flip()
 while keyPressed[0] not in quitkeys:
     keyPressed = event.waitKeys()
+    
+win.close()
