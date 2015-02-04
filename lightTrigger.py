@@ -31,7 +31,7 @@ while not userQuit:
         print 'trigger'
         triggerSensorOn.setAutoDraw(True)
         triggerClockOn = core.Clock()
-        while triggerClockOn.getTime()<20: #0.01:
+        while triggerClockOn.getTime()<0.01:
             win.flip()
     triggerSensorOn.setAutoDraw(False)
     win.flip()
