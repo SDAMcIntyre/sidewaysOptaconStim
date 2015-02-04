@@ -7,7 +7,7 @@ win = visual.Window(size=(1152, 870), fullscr=True, screen=1, allowGUI=False, al
 triggerPosition = [-11, 8]
 
 triggerSensorOn = visual.Rect(win=win, name='polygon',units='cm', 
-    width=[8, 8][0], height=[8, 8][1],
+    width=[1, 1][0], height=[1, 1][1],
     ori=0, pos=triggerPosition,
     lineWidth=1, lineColor=[1,1,1], lineColorSpace='rgb',
     fillColor=[1,1,1], fillColorSpace='rgb',
@@ -31,7 +31,7 @@ while not userQuit:
         print 'trigger'
         triggerSensorOn.setAutoDraw(True)
         triggerClockOn = core.Clock()
-        while triggerClockOn.getTime()<0.01:
+        while triggerClockOn.getTime()<20: #0.01:
             win.flip()
     triggerSensorOn.setAutoDraw(False)
     win.flip()
