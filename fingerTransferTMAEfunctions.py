@@ -24,6 +24,7 @@ def stim_set(presentationTime, stepDuration, standard, comparison, exptFolder, e
 
     trials = data.TrialHandler(stimCombinations,nReps=nReps,method='sequential')
     trials.data.addDataType('blockNo')
+    print trials
 
     stimList = []
     repList = []
@@ -35,6 +36,7 @@ def stim_set(presentationTime, stepDuration, standard, comparison, exptFolder, e
         
         blockNo += 1 #starts at 2 because 1 is reserved for lead time
         trials.data.add('blockNo', blockNo)
+        #trials.data.add('standardPosition',
         
         stndName = 'STDISOI'+str(standard)
         compName = 'CMPISOI'+str(thisTrial['isoi'])
@@ -71,7 +73,7 @@ def stim_set(presentationTime, stepDuration, standard, comparison, exptFolder, e
         blockList += [blockNo] * (len(stim))
         
     trials.saveAsText(fileName=exptFolder+exptName+'_stimList', 
-                                    stimOut=['isoi'], 
+                                    stimOut=['isoi','standardPositon'], 
                                     dataOut=['blockNo_raw'],
                                     appendFile=False)
 

@@ -2,18 +2,18 @@ from noiseStaircaseHelpers import printStaircase, toStaircase, outOfStaircase, p
 from fingerTransferTMAEfunctions import stim_set
 from psychopy import data, visual, event, core
 from math import ceil
-import serial, csv, numpy, random
+import serial, csv, numpy, random, pylab
 
-setup = False
+setup = True
 
 # create/locate stimulus files
 exptFolder = r'./fingerTransferTest/'
 exptName = 'unadapted'
-comparisonLocation = 'right'
 threshCriterion = 0.5
 standardValue = 82
 prefaceValues = [60,69,78,87,95,104] #comparison ISOIs that will be presented before the staircase
 prefaceStaircaseTrialsN = 2
+staircaseTrialsN=10
 comparisonValues = [17,21,26,30,34,39,43,47,52,56,60,65,69,73,78,82,87,91,95,100,104,108,113,117,
                                 121,126,130,134,139,143,147,152,156,160,165,169,174,178,182,187,191,195,200,204,
                                 -17,-21,-26,-30,-34,-39,-43,-47,-52,-56,-60,-65,-69,-73,-78,-82,-87,-91,-95,-100,-104,
@@ -39,16 +39,16 @@ isoiValues = numpy.array(isoiValues)
 blockNs = numpy.array(blockNs)
 
 # set up staircase
-staircase = data.QuestHandler(startVal = 82, #79.5 - 84.5 - range of +/- 2.5, based on SD?
-                      startValSd = 24,
+staircase = data.QuestHandler(startVal = 82, 
+                      startValSd = 12,
                       stopInterval= None, #6, #sd of posterior has to be this small or smaller for staircase to stop, unless nTrials reached
-                      nTrials=32,
+                      nTrials=staircaseTrialsN,
                       #extraInfo = thisInfo,
                       pThreshold = threshCriterion,
                       gamma = 0, #y value at floor of the function, 0 for PSE type experiment
                       delta=0.01, #lapse rate, I suppose for Weibull function fit
                       grain = 4,
-                      range = 286,
+                      range = 286, # if left at "None", seems to be set to 5, which is too small
                       method = 'quantile', #uses the median of the posterior as the final answer
                       stepType = 'lin',  #will home in on the 80% threshold. But stepType = 'log' doesn't usually work
                       minVal=min(comparisonValues), maxVal = max(comparisonValues)
