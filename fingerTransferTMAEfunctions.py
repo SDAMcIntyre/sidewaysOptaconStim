@@ -20,11 +20,10 @@ def stim_set(presentationTime, stepDuration, standard, comparison, exptFolder, e
     if not os.path.exists(exptFolder): 
         os.makedirs(exptFolder)
 
-    stimCombinations = [{'isoi':isoi,'standardPositon':standardPositon} for isoi in comparison for standardPositon in ['left','right']]
+    stimCombinations = [{'isoi':isoi,'standardPosition':standardPosition} for isoi in comparison for standardPosition in ['left','right']]
 
     trials = data.TrialHandler(stimCombinations,nReps=nReps,method='sequential')
     trials.data.addDataType('blockNo')
-    print trials
 
     stimList = []
     repList = []
@@ -43,7 +42,7 @@ def stim_set(presentationTime, stepDuration, standard, comparison, exptFolder, e
         
         isoiLR = [0,0]
         stepVectorLR = [0,0]
-        if thisTrial['standardPositon'] == 'left':
+        if thisTrial['standardPosition'] == 'left':
             stndPos = 0
             compPos = 1
             name = [stndName+'_'+compName]
@@ -73,7 +72,7 @@ def stim_set(presentationTime, stepDuration, standard, comparison, exptFolder, e
         blockList += [blockNo] * (len(stim))
         
     trials.saveAsText(fileName=exptFolder+exptName+'_stimList', 
-                                    stimOut=['isoi','standardPositon'], 
+                                    stimOut=['isoi','standardPosition'], 
                                     dataOut=['blockNo_raw'],
                                     appendFile=False)
 
@@ -82,3 +81,5 @@ def stim_set(presentationTime, stepDuration, standard, comparison, exptFolder, e
                                     stimRep=repList,
                                     blockList=blockList,
                                     stimName=nameList)
+
+    print 'created files in folder \"'+exptFolder+'\":\n'+exptName+'_stimList.dlm\n'+exptName+'_protocol.txt'

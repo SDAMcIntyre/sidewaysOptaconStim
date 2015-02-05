@@ -4,7 +4,7 @@ from psychopy import data, visual, event, core
 from math import ceil
 import serial, csv, numpy, random, pylab
 
-setup = True
+setup = False
 
 # create/locate stimulus files
 exptFolder = r'./fingerTransferTest/'
@@ -23,7 +23,6 @@ if setup == True:
     stim_set(presentationTime = 3000, stepDuration = [50,50], 
                         standard = -standardValue, comparison = comparisonValues, #negative standard so positive means proximal motion and negative means distal (not the reverse)
                         exptFolder = exptFolder, exptName = exptName, nReps =1) #pauseTime = 1000, 
-    print 'created files in folder \"'+exptFolder+'\":\n'+exptName+'_stimList.dlm\n'+exptName+'_protocol.txt'
     core.quit()
 
 # read in stimulus file information
@@ -48,7 +47,7 @@ staircase = data.QuestHandler(startVal = 82,
                       gamma = 0, #y value at floor of the function, 0 for PSE type experiment
                       delta=0.01, #lapse rate, I suppose for Weibull function fit
                       grain = 4,
-                      range = 286, # if left at "None", seems to be set to 5, which is too small
+                      range = 400, # if left at "None", seems to be set to 5, which is too small
                       method = 'quantile', #uses the median of the posterior as the final answer
                       stepType = 'lin',  #will home in on the 80% threshold. But stepType = 'log' doesn't usually work
                       minVal=min(comparisonValues), maxVal = max(comparisonValues)
@@ -75,7 +74,7 @@ pedal = ['a','c']
 response = ['left','right']
 quitkeys = ['escape','esc']
 
-# define window that everything appears in
+# define window that messages and light trigger appear in
 win = visual.Window(size=(1152, 870), fullscr=True, screen=1, allowGUI=False, allowStencil=False,
     monitor='testMonitor', color=[-1,-1,-1], colorSpace='rgb',
     blendMode='avg', useFBO=True,
@@ -107,25 +106,30 @@ while not optaconStatus == 'READY':
 
 while (not staircase.finished) and expStop==False:
     
-    # first select the comparison ISOI for this trial, either from preface values or staircase
-    if overallTrialN+1 < len(prefaceStaircaseTrials): #still doing prefaceStaircaseTrials
+    # first select the comparison ISOI for this trial, either from preface values or QUEST
+    if overallTrialN+1 < len(prefaceStaircaseTrials): #if still doing prefaceStaircaseTrials
         overallTrialN += 1
-        comparisonISOI = prefaceStaircaseTrials[overallTrialN]
-        blockNo = int(blockNs[isoiValues == comparisonISOI][0])
-    else:
-        if overallTrialN+1 == len(prefaceStaircaseTrials): #add these non-staircase trials so QUEST knows about them
+        suggestedISOI = prefaceStaircaseTrials[overallTrialN]
+    else: #QUEST trials
+        if overallTrialN+1 == len(prefaceStaircaseTrials): 
+            #add these preface trials so QUEST knows about them
             print('Importing ',respEachTrial,' and intensities ',repr(prefaceStaircaseTrials))
             staircase.importData( prefaceStaircaseTrials, numpy.array(respEachTrial)) 
         try: #advance the staircase
-            suggested = staircase.next() #staircase suggests the next value
+            suggestedISOI = staircase.next() #staircase suggests the next value
             print '\nSuggested value = '+str(suggested)
-            comparisonISOI = isoiValues[min(abs(suggested - isoiValues)) == abs(suggested - isoiValues)][0] #closest value to the suggested one that we have
-            blockNo = int(blockNs[min(abs(suggested - isoiValues)) == abs(suggested - isoiValues)][0])
             overallTrialN += 1
         except StopIteration: #Need this here, even though test for finished above. I can't understand why finished test doesn't accomplish this.
             print('\n\nStopping because staircase.next() returned a StopIteration, which it does when it is finished')
             staircase.finished = True
             break #break out of the trials loop
+    #closest value to the suggested one that we have
+    comparisonISOI = isoiValues[min(abs(suggestedISOI - isoiValues)) == abs(suggestedISOI - isoiValues)][0]
+    standardPosition = random.sample(['left','right'],1)[0]
+    iClosest = [i for i in range(len(isoiValues)) if 
+            min(abs(suggested - isoiValues)) == abs(suggested - isoiValues[i]) and 
+            standardPositionValues[i] == standardPosition]
+    blockNo = int(blockNs[iClosest][0])
     print '\noverallTrialN='+str(overallTrialN)+ '   comparison ISOI for this trial = '+ str(round(comparisonISOI,2))+"    Block number: "+str(blockNo)
     
     keyPressed = ['']
@@ -171,7 +175,7 @@ while (not staircase.finished) and expStop==False:
         
     if expStop == False:
         # prompt user to make a response
-        msg = visual.TextStim(win, text='Which stimulus feels more proximal (less distal)?\n( LEFT / RIGHT )')
+        msg = visual.TextStim(win, text='Which stimulus feels more proximal (less distal)?\nLEFT / RIGHT')
         msg.draw()
         win.flip()
         while not any(keyPressed):

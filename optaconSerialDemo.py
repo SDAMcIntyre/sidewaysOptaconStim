@@ -3,7 +3,7 @@ from psychopy import data, visual, event, core
 
 # define serial port to optacon computer
 optacon=serial.Serial("/dev/tty.KeySerial1",9600,timeout=1)
-optacon.read(100) #check if there's a better way to clear optacon.read
+optacon.read(100) #clear any existing messages
 
 # set up stimuli
 blocksToUse = range(2,5) # start at 2 because the first block should be blank (it is always played at the beginning)
