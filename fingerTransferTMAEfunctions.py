@@ -20,7 +20,8 @@ def stim_set(presentationTime, stepDuration, standard, comparison, exptFolder, e
     if not os.path.exists(exptFolder): 
         os.makedirs(exptFolder)
 
-    stimCombinations = [{'isoi':isoi,'standardPosition':standardPosition} for isoi in comparison for standardPosition in ['left','right']]
+    stimCombinations = [{'isoi':isoi,'standardPosition':standardPosition, 'standardDirection':standardDirection} for 
+                                        isoi in comparison for standardPosition in ['left','right']] for standardDirection in ['proximal','distal']]
 
     trials = data.TrialHandler(stimCombinations,nReps=nReps,method='sequential')
     trials.data.addDataType('blockNo')
@@ -35,8 +36,9 @@ def stim_set(presentationTime, stepDuration, standard, comparison, exptFolder, e
         
         blockNo += 1 #starts at 2 because 1 is reserved for lead time
         trials.data.add('blockNo', blockNo)
-        #trials.data.add('standardPosition',
         
+        if thisTrial['standardDirection'] == 'distal':
+            standard = -standard
         stndName = 'STDISOI'+str(standard)
         compName = 'CMPISOI'+str(thisTrial['isoi'])
         
@@ -72,7 +74,7 @@ def stim_set(presentationTime, stepDuration, standard, comparison, exptFolder, e
         blockList += [blockNo] * (len(stim))
         
     trials.saveAsText(fileName=exptFolder+exptName+'_stimList', 
-                                    stimOut=['isoi','standardPosition'], 
+                                    stimOut=['isoi','standardPosition','standardDirecton'], 
                                     dataOut=['blockNo_raw'],
                                     appendFile=False)
 
