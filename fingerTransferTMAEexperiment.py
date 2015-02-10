@@ -221,7 +221,7 @@ print('Median of posterior distribution according to QUEST, ISOI= {:.4f}'.format
 
 # save data
 dataFileName = exptName+'_'+time.strftime('%Y-%m-%d_%H%M%S')+'_'+participant+'_data'
-dataFile = open(exptFolder'rawData/'+dataFileName+'.txt', 'w')
+dataFile = open(exptFolder+'rawData/'+dataFileName+'.txt', 'w')
 dataFile.write('ISOI\tresponse\tthreshold\n')
 for i in range(len(staircase.intensities)):
     dataFile.write('%f\t%i\t%f\n' %(staircase.intensities[i], staircase.data[i],staircase.quantile()))
