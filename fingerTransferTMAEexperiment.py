@@ -2,18 +2,19 @@ from noiseStaircaseHelpers import printStaircase, toStaircase, outOfStaircase, p
 from fingerTransferTMAEfunctions import stim_set
 from psychopy import data, visual, event, core
 from math import ceil
-import serial, csv, numpy, random, pylab
+import serial, csv, numpy, random, pylab, time
 
 setup = False
 
 # create/locate stimulus files
 exptFolder = r'./fingerTransferTest/'
 exptName = 'unadapted'
+participant = 'name'
 threshCriterion = 0.5
 standardValue = 82
 prefaceValues = [60,69,78,87,95,104] #comparison ISOIs that will be presented before the staircase
-prefaceStaircaseTrialsN = 2
-staircaseTrialsN=10
+prefaceStaircaseTrialsN = 120
+staircaseTrialsN=5
 comparisonValues = [17,21,26,30,34,39,43,47,52,56,60,65,69,73,78,82,87,91,95,100,104,108,113,117,
                                 121,126,130,134,139,143,147,152,156,160,165,169,174,178,182,187,191,195,200,204,
                                 -17,-21,-26,-30,-34,-39,-43,-47,-52,-56,-60,-65,-69,-73,-78,-82,-87,-91,-95,-100,-104,
@@ -31,10 +32,13 @@ with open(stimFile) as file_object:
     stimList = list(csv.DictReader(file_object, dialect='excel-tab'))
 isoiValues = []
 blockNs = []
+standardPositionValues = []
 for stim in stimList:
     isoiValues += [-float(stim['isoi'])] #take the negative so positive means proximal motion and negative means distal (not the reverse)
+    standardPositionValues += [stim['standardPosition']]
     blockNs += [float(stim['blockNo_raw'])]
 isoiValues = numpy.array(isoiValues)
+standardPositionValues = numpy.array(standardPositionValues)
 blockNs = numpy.array(blockNs)
 
 # set up staircase
@@ -117,7 +121,7 @@ while (not staircase.finished) and expStop==False:
             staircase.importData( prefaceStaircaseTrials, numpy.array(respEachTrial)) 
         try: #advance the staircase
             suggestedISOI = staircase.next() #staircase suggests the next value
-            print '\nSuggested value = '+str(suggested)
+            print '\nSuggested value = '+str(suggestedISOI)
             overallTrialN += 1
         except StopIteration: #Need this here, even though test for finished above. I can't understand why finished test doesn't accomplish this.
             print('\n\nStopping because staircase.next() returned a StopIteration, which it does when it is finished')
@@ -127,7 +131,7 @@ while (not staircase.finished) and expStop==False:
     comparisonISOI = isoiValues[min(abs(suggestedISOI - isoiValues)) == abs(suggestedISOI - isoiValues)][0]
     standardPosition = random.sample(['left','right'],1)[0]
     iClosest = [i for i in range(len(isoiValues)) if 
-            min(abs(suggested - isoiValues)) == abs(suggested - isoiValues[i]) and 
+            min(abs(suggestedISOI - isoiValues)) == abs(suggestedISOI - isoiValues[i]) and 
             standardPositionValues[i] == standardPosition]
     blockNo = int(blockNs[iClosest][0])
     print '\noverallTrialN='+str(overallTrialN)+ '   comparison ISOI for this trial = '+ str(round(comparisonISOI,2))+"    Block number: "+str(blockNo)
@@ -190,11 +194,11 @@ while (not staircase.finished) and expStop==False:
     if expStop == False:
         # label the response
         thisPedal = response[pedal.index(keyPressed[0])]
-        if thisPedal == comparisonLocation:
-            thisResp = 1
-        else:
+        if thisPedal == standardPosition:
             thisResp = 0
-        print 'pedal pressed: '+str(thisPedal)+', comparison location: '+str(comparisonLocation)
+        else:
+            thisResp = 1
+        print 'pedal pressed: '+str(thisPedal)+', standard location: '+str(standardPosition)
     
         # record the response and the ISOI used
         respEachTrial.append(thisResp)
@@ -215,22 +219,16 @@ else:
 
 print('Median of posterior distribution according to QUEST, ISOI= {:.4f}'.format(staircase.quantile())) 
 
-#fit curve
-fit = None
-try: 
-    fit = data.FitWeibull(staircase.intensities, staircase.data, expectedMin=0,  sems = 1.0/len(staircase.intensities))
-except:
-    print("Fit failed.")
-plotDataAndPsychometricCurve(staircase,fit,False,threshCriterion)
-#save figure to file
-outputFile =  exptFolder+exptName+'_plot'
-pylab.savefig(outputFile + '.pdf')
-pylab.savefig(outputFile + '.jpg')
-pylab.show() #must call this to actually show plot
-
 # save data
-staircase.saveAsText(exptFolder+exptName+'_data')
-print 'created file in folder \"'+exptFolder+'\":\n'+exptName+'_data.dlm\n'
+dataFileName = exptName+'_'+time.strftime('%Y-%m-%d_%H%M%S')+'_'+participant+'_data'
+dataFile = open(exptFolder'rawData/'+dataFileName+'.txt', 'w')
+dataFile.write('ISOI\tresponse\tthreshold\n')
+for i in range(len(staircase.intensities)):
+    dataFile.write('%f\t%i\t%f\n' %(staircase.intensities[i], staircase.data[i],staircase.quantile()))
+dataFile.write('\n')
+dataFile.close()
+print 'created file in folder \"'+exptFolder+'\":\n'+dataFileName+'.txt\n'
+
 printStaircase(staircase, False, briefTrialUpdate=False, printInternalVal=False,  alsoLog=False)
 
 msg = visual.TextStim(win, text='The experiment is finished.\nPress <esc> to quit.')
@@ -239,3 +237,17 @@ win.flip()
 while keyPressed[0] not in quitkeys:
     keyPressed = event.waitKeys()
 win.close()
+
+#fit curve
+#fit = None
+#try: 
+#    fit = data.FitWeibull(staircase.intensities, staircase.data, expectedMin=0,  sems = 1.0/len(staircase.intensities))
+#except:
+#    print("Fit failed.")
+
+#plotDataAndPsychometricCurve(staircase,fit,False,threshCriterion)
+# save figure to file
+#outputFile =  exptFolder+exptName+'_plot'
+#pylab.savefig(outputFile + '.pdf')
+#pylab.savefig(outputFile + '.jpg')
+#pylab.show() #must call this to actually show plot
