@@ -10,7 +10,8 @@ read_raw_data <- function(fname, keepFileName = TRUE) {
   readData <- read.table(file=paste0('./rawData/',fname), header = TRUE)
   
   output <- data.frame(experiment = condValues[1],
-                       participant = condValues[4],
+                       participant = condValues[2],
+                       condition = condValues[3],
                        readData,
                        filename = fname)
   if (keepFileName) {
