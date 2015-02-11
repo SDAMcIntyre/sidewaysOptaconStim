@@ -4,15 +4,16 @@ from psychopy import data, visual, event, core
 from math import ceil
 import serial, csv, numpy, random, pylab, time
 
-setup = True
+setup = False
 
 # create/locate stimulus files
 exptFolder = r'./fingerTransferTest/'
-exptName = 'unadapted'
-participant = 'name'
+exptName = 'pilot'
+condition = 'unadapted'
+participant = 'sarah'
 threshCriterion = 0.5
 standardValue = 82 # should be a positive value; direction is randomised
-prefaceValues = [60,69,78,87,95,104] #comparison ISOIs that will be presented before the staircase
+prefaceValues = [21,47,73,100,126,152] #comparison ISOIs that will be presented before the staircase
 prefaceStaircaseTrialsN = 120
 staircaseTrialsN=5
 comparisonValues = [17,21,26,30,34,39,43,47,52,56,60,65,69,73,78,82,87,91,95,100,104,108,113,117,
@@ -20,9 +21,9 @@ comparisonValues = [17,21,26,30,34,39,43,47,52,56,60,65,69,73,78,82,87,91,95,100
                                 #all possible ISOIs available to the staircase; be generous
                                 # both directions for each ISOI are automatically created in the stim_set() function
 if setup == True:
-    stim_set(presentationTime = 3000, stepDuration = [50,50], 
-                        standard = standardValue, comparison = comparisonValues, 
-                        exptFolder = exptFolder, exptName = exptName, nReps =1) #pauseTime = 1000, 
+    stim_set(presentationTime = 3000, stepDuration = [50,50],
+                        standard = standardValue, comparison = comparisonValues,
+                        exptFolder = exptFolder, exptName = exptName, nReps =1)
     core.quit()
 
 # read in stimulus file information
@@ -34,9 +35,9 @@ blockNs = []
 standardPositionValues = []
 standardISOIvalues = []
 for stim in stimList:
-    isoiValues += [float(stim['isoi'])]
+    isoiValues += [float(stim['compISOI'])]
     standardPositionValues += [stim['standardPosition']]
-    standardISOIvalues += [float(stim['stndISOI']]
+    standardISOIvalues += [float(stim['stndISOI'])]
     blockNs += [float(stim['blockNo_raw'])]
 isoiValues = numpy.array(isoiValues)
 standardPositionValues = numpy.array(standardPositionValues)
@@ -45,7 +46,7 @@ blockNs = numpy.array(blockNs)
 
 # set up staircase
 staircase = data.QuestHandler(startVal = 82, 
-                      startValSd = 12,
+                      startValSd = 40,
                       stopInterval= None, #6, #sd of posterior has to be this small or smaller for staircase to stop, unless nTrials reached
                       nTrials=staircaseTrialsN,
                       #extraInfo = thisInfo,
@@ -61,12 +62,14 @@ staircase = data.QuestHandler(startVal = 82,
 
 expStop = False
 doingStaircasePhase = False #First phase of experiment is method of constant stimuli. If use naked QUEST, might converge too soon
-prefaceStaircaseTrials = random.sample(prefaceValues, len(prefaceValues))
+#prefaceStaircaseTrials = random.sample(prefaceValues, len(prefaceValues))
 respEachTrial = list() #only needed for initialNonstaircaseTrials
 overallTrialN = -1
 
-if prefaceStaircaseTrialsN > len(prefaceStaircaseTrials): #repeat array to accommodate desired number of easyStarterTrials
-    prefaceStaircaseTrials = numpy.tile( prefaceStaircaseTrials, ceil( prefaceStaircaseTrialsN/len(prefaceStaircaseTrials) ) )
+prefaceStaircaseTrials = []
+prefaceTrials = data.TrialHandler( prefaceValues, nReps = ceil(prefaceStaircaseTrialsN/float(len(prefaceValues))) )
+for thisTrial in prefaceTrials:
+    prefaceStaircaseTrials += [thisTrial]
 prefaceStaircaseTrials = prefaceStaircaseTrials[0:prefaceStaircaseTrialsN]
 
 staircaseTrialN = -1; mainStaircaseGoing = False
@@ -110,6 +113,11 @@ while not optaconStatus == 'READY':
         core.quit()
             
 
+#data file
+dataFileName = exptName+'_'+participant+'_'+condition+'_data_'+time.strftime('%Y-%m-%d_%H%M%S')
+dataFile = open(exptFolder+'rawData/'+dataFileName+'.txt', 'w')
+dataFile.write('ISOI\tresponse\tthreshold\tdirection\tstndPosition\n')
+
 while (not staircase.finished) and expStop==False:
     
     # first select the comparison ISOI for this trial, either from preface values or QUEST
@@ -129,13 +137,20 @@ while (not staircase.finished) and expStop==False:
             print('\n\nStopping because staircase.next() returned a StopIteration, which it does when it is finished')
             staircase.finished = True
             break #break out of the trials loop
+    
+    direction = random.sample([-1,1],1)[0]
+    staircase.addOtherData('direction', direction)
+    
     #closest value to the suggested one that we have
     comparisonISOI = isoiValues[min(abs(suggestedISOI - isoiValues)) == abs(suggestedISOI - isoiValues)][0]
-    standardDirection = random.sample([-1,1],1)[0]
-    standardISOI = standardValue*standardDirection
+    
+    standardISOI = standardValue*direction
     standardPosition = random.sample(['left','right'],1)[0]
+    staircase.addOtherData('standardPosition', standardPosition)
+    
+    #find the block number for the stimulus
     iClosest = [i for i in range(len(isoiValues)) if 
-            min(abs(suggestedISOI - isoiValues)) == abs(suggestedISOI - isoiValues[i]) and 
+            isoiValues[i] == comparisonISOI*direction and 
             standardISOIvalues[i] == standardISOI and
             standardPositionValues[i] == standardPosition]
     blockNo = int(blockNs[iClosest][0])
@@ -161,7 +176,7 @@ while (not staircase.finished) and expStop==False:
         
     if expStop == False:
         # use light to trigger stimulus presentation
-        core.wait(1.2)
+        core.wait(1.3)
         msg = visual.TextStim(win, text='\n<esc> to quit')
         msg.draw()
         triggerSensorOn.setAutoDraw(True)
@@ -184,7 +199,8 @@ while (not staircase.finished) and expStop==False:
         
     if expStop == False:
         # prompt user to make a response
-        msg = visual.TextStim(win, text='Which stimulus feels more proximal (less distal)?\nLEFT / RIGHT')
+        msg = visual.TextStim(win, text='Which stimulus feels more proximal (less distal)?\nLEFT / RIGHT\n\n\n'+
+                                                                str(overallTrialN+1)+' of '+str(prefaceStaircaseTrialsN+staircaseTrialsN))
         msg.draw()
         win.flip()
         while not any(keyPressed):
@@ -199,11 +215,11 @@ while (not staircase.finished) and expStop==False:
     if expStop == False:
         # label the response
         thisPedal = response[pedal.index(keyPressed[0])]
-        if thisPedal == standardPosition:
+        if (thisPedal == standardPosition and direction == 1) or (thisPedal != standardPosition and direction == -1):
             thisResp = 0
         else:
             thisResp = 1
-        print 'pedal pressed: '+str(thisPedal)+', standard location: '+str(standardPosition)
+        print 'pedal pressed: '+str(thisPedal)+', standard location: '+standardPosition+'; direction: '+str(direction)
     
         # record the response and the ISOI used
         respEachTrial.append(thisResp)
@@ -225,14 +241,13 @@ else:
 print('Median of posterior distribution according to QUEST, ISOI= {:.4f}'.format(staircase.quantile())) 
 
 # save data
-dataFileName = exptName+'_'+time.strftime('%Y-%m-%d_%H%M%S')+'_'+participant+'_data'
-dataFile = open(exptFolder+'rawData/'+dataFileName+'.txt', 'w')
-dataFile.write('ISOI\tresponse\tthreshold\n')
+staircase.saveAsPickle(exptFolder+'rawData/'+dataFileName)
 for i in range(len(staircase.intensities)):
-    dataFile.write('%f\t%i\t%f\n' %(staircase.intensities[i], staircase.data[i],staircase.quantile()))
+    dataFile.write( '%f\t%i\t%f\t%i\t%s\n' %(staircase.intensities[i], staircase.data[i], staircase.quantile(), 
+                                                        staircase.otherData['direction'][i], staircase.otherData['standardPosition'][i]) )
 dataFile.write('\n')
 dataFile.close()
-print 'created file in folder \"'+exptFolder+'\":\n'+dataFileName+'.txt\n'
+print 'created file in folder \"'+exptFolder+'rawData/\":\n'+dataFileName+'.txt\n'
 
 printStaircase(staircase, False, briefTrialUpdate=False, printInternalVal=False,  alsoLog=False)
 
