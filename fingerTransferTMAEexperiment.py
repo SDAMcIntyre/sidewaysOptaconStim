@@ -13,9 +13,10 @@ condition = 'unadapted'
 participant = 'sarah'
 threshCriterion = 0.5
 standardValue = 82 # should be a positive value; direction is randomised
-prefaceValues = [21,47,73,100,126,152] #comparison ISOIs that will be presented before the staircase
-prefaceStaircaseTrialsN = 120
-staircaseTrialsN=5
+prefaceValues = [21,47,126,152] #comparison ISOIs that will be presented before the staircase
+prefaceStaircaseTrialsN = 16
+staircaseTrialsN=34
+jitter = 22 #amount by which to jitter staircase suggestions
 comparisonValues = [17,21,26,30,34,39,43,47,52,56,60,65,69,73,78,82,87,91,95,100,104,108,113,117,
                                 121,126,130,134,139,143,147,152,156,160,165,169,174,178,182,187,191,195,200,204] 
                                 #all possible ISOIs available to the staircase; be generous
@@ -128,10 +129,11 @@ while (not staircase.finished) and expStop==False:
         if overallTrialN+1 == len(prefaceStaircaseTrials): 
             #add these preface trials so QUEST knows about them
             print('Importing ',respEachTrial,' and intensities ',repr(prefaceStaircaseTrials))
-            staircase.importData( prefaceStaircaseTrials, numpy.array(respEachTrial)) 
+            staircase.importData(prefaceStaircaseTrials, 1-numpy.array(respEachTrial)) 
         try: #advance the staircase
             suggestedISOI = staircase.next() #staircase suggests the next value
             print '\nSuggested value = '+str(suggestedISOI)
+            suggestedISOI = suggestedISOI + random.sample(range(jitter),1)[0]*random.sample([-1,1],1)[0]
             overallTrialN += 1
         except StopIteration: #Need this here, even though test for finished above. I can't understand why finished test doesn't accomplish this.
             print('\n\nStopping because staircase.next() returned a StopIteration, which it does when it is finished')
@@ -159,7 +161,7 @@ while (not staircase.finished) and expStop==False:
     keyPressed = ['']
     
     # tell optacon what the next stimulus is
-    msg = visual.TextStim(win, text='Loading next stimulus...')
+    msg = visual.TextStim(win, text='Next stimulus...')
     msg.draw()
     win.flip()
     optacon.write("b"+str(blockNo))
@@ -176,17 +178,10 @@ while (not staircase.finished) and expStop==False:
         
     if expStop == False:
         # use light to trigger stimulus presentation
-        core.wait(1.3)
-        msg = visual.TextStim(win, text='\n<esc> to quit')
-        msg.draw()
         triggerSensorOn.setAutoDraw(True)
-        triggerClockOn = core.Clock()
-        while triggerClockOn.getTime()<0.01:
-            win.flip()
-        print 'stimulus triggered'
-        triggerSensorOn.setAutoDraw(False)
+        msg.draw()
         win.flip()
-        
+        print 'stimulus triggered'
         # wait until optacon has finished presenting the stimulus
         while not optaconStatus == 'READY':
             optaconStatus = optacon.read(size=5)
@@ -196,6 +191,8 @@ while (not staircase.finished) and expStop==False:
                 print 'user aborted'
                 expStop=True
                 break
+        triggerSensorOn.setAutoDraw(False)
+        win.flip()
         
     if expStop == False:
         # prompt user to make a response
@@ -208,8 +205,8 @@ while (not staircase.finished) and expStop==False:
         if keyPressed[0] in quitkeys:
             print 'user aborted'
             expStop = True
-        msg = visual.TextStim(win, text='\n<esc> to quit')
-        msg.draw()
+#        msg = visual.TextStim(win, text='')
+#        msg.draw()
         win.flip()
         
     if expStop == False:
@@ -224,13 +221,13 @@ while (not staircase.finished) and expStop==False:
         # record the response and the ISOI used
         respEachTrial.append(thisResp)
         if overallTrialN >= len(prefaceStaircaseTrials): #if doing staircase trials now
-            staircase.addResponse(thisResp, intensity = comparisonISOI)
+            staircase.addResponse(1-thisResp, intensity = comparisonISOI)
             print 'Have added an intensity of ' + str(comparisonISOI)
 
 if overallTrialN+1 < len(prefaceStaircaseTrials) and (overallTrialN>=0): #exp stopped before got through staircase preface trials
     #add these non-staircase trials so QUEST knows about them
     print 'Importing '+str(respEachTrial)+' and intensities '+str(prefaceStaircaseTrials[0:len(respEachTrial)])+'\n\n'
-    staircase.importData( toStaircase(prefaceStaircaseTrials[0:len(respEachTrial)],False), numpy.array(respEachTrial)) 
+    staircase.importData( toStaircase(prefaceStaircaseTrials[0:len(respEachTrial)],False), 1-numpy.array(respEachTrial)) 
 print 'Finished experiment.'
 
 if staircase.finished:
@@ -243,7 +240,7 @@ print('Median of posterior distribution according to QUEST, ISOI= {:.4f}'.format
 # save data
 staircase.saveAsPickle(exptFolder+'rawData/'+dataFileName)
 for i in range(len(staircase.intensities)):
-    dataFile.write( '%f\t%i\t%f\t%i\t%s\n' %(staircase.intensities[i], staircase.data[i], staircase.quantile(), 
+    dataFile.write( '%f\t%i\t%f\t%i\t%s\n' %(staircase.intensities[i], respEachTrial[i], staircase.quantile(), 
                                                         staircase.otherData['direction'][i], staircase.otherData['standardPosition'][i]) )
 dataFile.write('\n')
 dataFile.close()
