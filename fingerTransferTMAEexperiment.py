@@ -4,25 +4,24 @@ from psychopy import data, visual, event, core
 from math import ceil
 import serial, csv, numpy, random, pylab, time
 
-setup = False
+setup = True
 
 # create/locate stimulus files
 exptFolder = r'./fingerTransferTest/'
 exptName = 'unadapted'
 participant = 'name'
 threshCriterion = 0.5
-standardValue = 82
+standardValue = 82 # should be a positive value; direction is randomised
 prefaceValues = [60,69,78,87,95,104] #comparison ISOIs that will be presented before the staircase
 prefaceStaircaseTrialsN = 120
 staircaseTrialsN=5
 comparisonValues = [17,21,26,30,34,39,43,47,52,56,60,65,69,73,78,82,87,91,95,100,104,108,113,117,
-                                121,126,130,134,139,143,147,152,156,160,165,169,174,178,182,187,191,195,200,204,
-                                -17,-21,-26,-30,-34,-39,-43,-47,-52,-56,-60,-65,-69,-73,-78,-82,-87,-91,-95,-100,-104,
-                                -108,-113,-117,-121,-126,-130,-134,-139,-143,-147,-152,-156,-160,-165,-169,-174,-178,
-                                -182,-187,-191,-195,-200,-204]
+                                121,126,130,134,139,143,147,152,156,160,165,169,174,178,182,187,191,195,200,204] 
+                                #all possible ISOIs available to the staircase; be generous
+                                # both directions for each ISOI are automatically created in the stim_set() function
 if setup == True:
     stim_set(presentationTime = 3000, stepDuration = [50,50], 
-                        standard = -standardValue, comparison = comparisonValues, #negative standard so positive means proximal motion and negative means distal (not the reverse)
+                        standard = standardValue, comparison = comparisonValues, 
                         exptFolder = exptFolder, exptName = exptName, nReps =1) #pauseTime = 1000, 
     core.quit()
 
@@ -33,12 +32,15 @@ with open(stimFile) as file_object:
 isoiValues = []
 blockNs = []
 standardPositionValues = []
+standardISOIvalues = []
 for stim in stimList:
-    isoiValues += [-float(stim['isoi'])] #take the negative so positive means proximal motion and negative means distal (not the reverse)
+    isoiValues += [float(stim['isoi'])]
     standardPositionValues += [stim['standardPosition']]
+    standardISOIvalues += [float(stim['stndISOI']]
     blockNs += [float(stim['blockNo_raw'])]
 isoiValues = numpy.array(isoiValues)
 standardPositionValues = numpy.array(standardPositionValues)
+standardISOIvalues = numpy.array(standardISOIvalues)
 blockNs = numpy.array(blockNs)
 
 # set up staircase
@@ -129,9 +131,12 @@ while (not staircase.finished) and expStop==False:
             break #break out of the trials loop
     #closest value to the suggested one that we have
     comparisonISOI = isoiValues[min(abs(suggestedISOI - isoiValues)) == abs(suggestedISOI - isoiValues)][0]
+    standardDirection = random.sample([-1,1],1)[0]
+    standardISOI = standardValue*standardDirection
     standardPosition = random.sample(['left','right'],1)[0]
     iClosest = [i for i in range(len(isoiValues)) if 
             min(abs(suggestedISOI - isoiValues)) == abs(suggestedISOI - isoiValues[i]) and 
+            standardISOIvalues[i] == standardISOI and
             standardPositionValues[i] == standardPosition]
     blockNo = int(blockNs[iClosest][0])
     print '\noverallTrialN='+str(overallTrialN)+ '   comparison ISOI for this trial = '+ str(round(comparisonISOI,2))+"    Block number: "+str(blockNo)

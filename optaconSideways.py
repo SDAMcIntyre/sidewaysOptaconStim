@@ -46,7 +46,7 @@ def create_one_image(stepsToUse,colsToUse,randomPos,startRows,stepVector,rowsToU
     return image
 
 def single_presentation(presDur=3000, stepDur=[50,50], isoi=[82,82], 
-                                  rowsToUse=range(0,6), colsToUse=[range(0,6),range(18,24)],
+                                  rowsToUse=range(0,6), colsToUse=[range(18,24),range(0,6)],
                                   stepVector=[1,1], randomPos=[False,False], spread=[True,True]):
     """This function creates an apparent motion stimulus for the Optacon, in a sideways configuration
     It returns a list of optacon array configurations, one for each step of the apparent motion, in order.

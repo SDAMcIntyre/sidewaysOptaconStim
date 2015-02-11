@@ -16,31 +16,32 @@ zeros = numpy.zeros
 sign = numpy.sign
 
 def stim_set(presentationTime, stepDuration, standard, comparison, exptFolder, exptName, nReps=1):
-
+    
+    standard = [standard, -standard]
+    comparison+=[x*-1 for x in comparison]
+    
     if not os.path.exists(exptFolder): 
         os.makedirs(exptFolder)
-
-    stimCombinations = [{'isoi':isoi,'standardPosition':standardPosition, 'standardDirection':standardDirection} for 
-                                        isoi in comparison for standardPosition in ['left','right']] for standardDirection in ['proximal','distal']]
-
+    
+    stimCombinations = [{'compISOI':compISOI, 'stndISOI':stndISOI, 'standardPosition':standardPosition} for 
+                                        compISOI in comparison for stndISOI in standard for standardPosition in ['left','right']]
+    
     trials = data.TrialHandler(stimCombinations,nReps=nReps,method='sequential')
     trials.data.addDataType('blockNo')
-
+    
     stimList = []
     repList = []
     nameList = []
     blockList = []
-
+    
     blockNo = 1
     for thisTrial in trials:
         
         blockNo += 1 #starts at 2 because 1 is reserved for lead time
         trials.data.add('blockNo', blockNo)
         
-        if thisTrial['standardDirection'] == 'distal':
-            standard = -standard
-        stndName = 'STDISOI'+str(standard)
-        compName = 'CMPISOI'+str(thisTrial['isoi'])
+        stndName = 'STNDISOI_'+str(thisTrial['stndISOI'])
+        compName = 'COMPISOI_'+str(thisTrial['compISOI'])
         
         isoiLR = [0,0]
         stepVectorLR = [0,0]
@@ -53,15 +54,16 @@ def stim_set(presentationTime, stepDuration, standard, comparison, exptFolder, e
             compPos = 0
             name = [compName+'_'+stndName]
             
-        isoiLR[stndPos] = abs(standard)
-        isoiLR[compPos] = abs(thisTrial['isoi'])
-        stepVectorLR[stndPos] = sign(standard)
-        stepVectorLR[compPos] = sign(thisTrial['isoi'])
+        isoiLR[stndPos] = abs(thisTrial['stndISOI'])
+        isoiLR[compPos] = abs(thisTrial['compISOI'])
+        stepVectorLR[stndPos] = sign(thisTrial['stndISOI'])
+        stepVectorLR[compPos] = sign(thisTrial['compISOI'])
         
         stim, rep = single_presentation(presDur=presentationTime,
                                                                             stepDur=stepDuration,
                                                                             isoi = isoiLR,
-                                                                            rowsToUse=range(0,6), colsToUse=[range(0,6),range(18,24)],
+                                                                            rowsToUse=range(0,6), #assumes Optacon is sideways
+                                                                            colsToUse=[range(18,24),range(0,6)], #first is left, second is right; depends on Optacon orientation in eperiment
                                                                             stepVector = stepVectorLR, 
                                                                             randomPos=[False,False], spread=[True,True]
                                                                             )
@@ -74,7 +76,7 @@ def stim_set(presentationTime, stepDuration, standard, comparison, exptFolder, e
         blockList += [blockNo] * (len(stim))
         
     trials.saveAsText(fileName=exptFolder+exptName+'_stimList', 
-                                    stimOut=['isoi','standardPosition','standardDirecton'], 
+                                    stimOut=['compISOI','stndISOI','standardPosition'], 
                                     dataOut=['blockNo_raw'],
                                     appendFile=False)
 
