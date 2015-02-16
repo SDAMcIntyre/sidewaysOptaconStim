@@ -6,6 +6,11 @@ import serial, csv, numpy, random, pylab, time
 
 setup = False
 
+# serial port name depends on the computer 
+# To check for serial ports available on Mac OS, in Terminal app, type "ls /dev/tty.*"
+# make sure driver is installed (http://www.tripplite.com/high-speed-usb-to-serial-adapter-keyspan~USA19HS/)
+optaconSerialPortName = "/dev/tty.KeySerial1"
+
 # create/locate stimulus files
 exptFolder = r'./fingerTransferTest/'
 exptName = 'pilot'
@@ -76,7 +81,7 @@ prefaceStaircaseTrials = prefaceStaircaseTrials[0:prefaceStaircaseTrialsN]
 staircaseTrialN = -1; mainStaircaseGoing = False
 
 # define serial port to optacon computer
-optacon=serial.Serial("/dev/tty.KeySerial1",9600,timeout=1)
+optacon=serial.Serial(optaconSerialPortName,9600,timeout=1)
 optacon.read(100) #clear any existing messages
 
 # keypress labels

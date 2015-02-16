@@ -1,8 +1,13 @@
 import serial
 from psychopy import data, visual, event, core
 
+# serial port name depends on the computer 
+# To check for serial ports available on Mac OS, in Terminal app, type "ls /dev/tty.*"
+# make sure driver is installed (http://www.tripplite.com/high-speed-usb-to-serial-adapter-keyspan~USA19HS/)
+optaconSerialPortName = "/dev/tty.KeySerial1"
+
 # define serial port to optacon computer
-optacon=serial.Serial("/dev/tty.KeySerial1",9600,timeout=1)
+optacon=serial.Serial(optaconSerialPortName,9600,timeout=1)
 optacon.read(100) #clear any existing messages
 
 # set up stimuli
@@ -17,7 +22,7 @@ response = ['left','right']
 quitkeys = ['escape','esc']
 
 # define window that everything appears in
-win = visual.Window(size=(1152, 870), fullscr=True, screen=1, allowGUI=False, allowStencil=False,
+win = visual.Window(size=(1152, 870), fullscr=True, screen=0, allowGUI=False, allowStencil=False,
     monitor='testMonitor', color=[-1,-1,-1], colorSpace='rgb',
     blendMode='avg', useFBO=True,
     )
@@ -31,7 +36,7 @@ triggerSensorOn = visual.Rect(win=win, name='polygon',units='cm',
     fillColor=[1,1,1], fillColorSpace='rgb',
     opacity=1,interpolate=True)
     
-msg = visual.TextStim(win, text='Click \"Go" on the Optacon protocol...\n<esc> to quit')
+msg = visual.TextStim(win, text='Make sure you have loaded an Optacon protocol with at least %i blocks.\n\nThen click \"Go" on the Optacon protocol...\n\n<esc> to quit'%(max(blocksToUse)))
 msg.draw()
 win.flip()
 optaconStatus = ''
