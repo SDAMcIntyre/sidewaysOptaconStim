@@ -1,0 +1,11 @@
+.DS_Store
+.spyderworkspace
+*.pyc
+/pilot1
+*.dlm
+*.txt
+*.psydat
+.Rproj.user
+.Rhistory
+*.eps
+*.pdf
