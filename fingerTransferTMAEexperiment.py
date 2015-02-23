@@ -20,7 +20,7 @@ threshCriterion = 0.5
 standardValue = 82 # should be a positive value; direction is randomised
 prefaceValues = [21,47,126,152] #comparison ISOIs that will be presented before the staircase
 prefaceStaircaseTrialsN = 16
-staircaseTrialsN=34
+staircaseTrialsN = 50 - prefaceStaircaseTrialsN
 jitter = 22 #amount by which to jitter staircase suggestions
 comparisonValues = [17,21,26,30,34,39,43,47,52,56,60,65,69,73,78,82,87,91,95,100,104,108,113,117,
                                 121,126,130,134,139,143,147,152,156,160,165,169,174,178,182,187,191,195,200,204] 
@@ -96,7 +96,7 @@ win = visual.Window(size=(1152, 870), fullscr=True, screen=1, allowGUI=False, al
     )
 
 # define the patch of white screen to trigger the light sensor
-triggerPosition = [-11, 8]
+triggerPosition = [-16, 12]
 triggerSensorOn = visual.Rect(win=win, name='polygon',units='cm', 
     width=[1, 1][0], height=[1, 1][1],
     ori=0, pos=triggerPosition,

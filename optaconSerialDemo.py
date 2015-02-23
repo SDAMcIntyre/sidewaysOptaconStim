@@ -22,13 +22,13 @@ response = ['left','right']
 quitkeys = ['escape','esc']
 
 # define window that everything appears in
-win = visual.Window(size=(1152, 870), fullscr=True, screen=0, allowGUI=False, allowStencil=False,
+win = visual.Window(size=(1152, 870), fullscr=True, screen=1, allowGUI=False, allowStencil=False,
     monitor='testMonitor', color=[-1,-1,-1], colorSpace='rgb',
     blendMode='avg', useFBO=True,
     )
 
 # define the patch of white screen to trigger the light sensor
-triggerPosition = [-11, 8]
+triggerPosition = [-16, 12]
 triggerSensorOn = visual.Rect(win=win, name='polygon',units='cm', 
     width=[1, 1][0], height=[1, 1][1],
     ori=0, pos=triggerPosition,

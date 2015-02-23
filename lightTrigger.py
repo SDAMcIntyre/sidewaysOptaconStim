@@ -4,7 +4,7 @@ win = visual.Window(size=(1152, 870), fullscr=True, screen=1, allowGUI=False, al
     monitor='testMonitor', color=[-1,-1,-1], colorSpace='rgb',
     blendMode='avg', useFBO=True,
     )
-triggerPosition = [-11, 8]
+triggerPosition = [-16, 12]
 
 triggerSensorOn = visual.Rect(win=win, name='polygon',units='cm', 
     width=[1, 1][0], height=[1, 1][1],
